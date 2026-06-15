@@ -27,9 +27,15 @@ function layApiKey_() {
 }
 
 const CAU_HINH = {
+  // Endpoint API. Mặc định là Anthropic chính thức.
+  // Nếu dùng proxy tương thích Anthropic (vd shopaikey.com) thì đổi tại đây.
+  // KHÔNG thêm đuôi /v1/messages — script tự nối.
+  apiBaseUrl: "https://api.shopaikey.com",
+
   // Mặc định dùng Claude Opus 4.8 (chất lượng cao nhất).
   // Muốn tiết kiệm chi phí cho việc tóm tắt hàng loạt, đổi sang
-  // "claude-haiku-4-5" — rẻ hơn nhiều và vẫn tốt cho tóm tắt.
+  // "claude-haiku-4-5". Lưu ý: tên model phải khớp danh sách model
+  // mà endpoint hỗ trợ (xem "Bảng giá model" trên trang dịch vụ).
   model: "claude-opus-4-8",
 
   // (a) Nguồn RSS (nếu trang có RSS). Để trống nếu không dùng.
@@ -228,7 +234,7 @@ function tomTatBangClaude_(tin) {
     output_config: { format: { type: "json_schema", schema: schema } },
   };
 
-  const res = UrlFetchApp.fetch("https://api.anthropic.com/v1/messages", {
+  const res = UrlFetchApp.fetch(CAU_HINH.apiBaseUrl + "/v1/messages", {
     method: "post",
     contentType: "application/json",
     muteHttpExceptions: true,

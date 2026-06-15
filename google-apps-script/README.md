@@ -29,9 +29,12 @@ File [Code.gs](Code.gs) biến Google Sheet thành backend cho app: vừa làm *
 
 ## B. Bật luồng AI tóm tắt tin (tùy chọn)
 
-1. Lấy **Claude API key** tại https://console.anthropic.com → API Keys.
+1. Lấy **API key**:
+   - Anthropic chính thức: https://console.anthropic.com → API Keys, và giữ `apiBaseUrl` mặc định `https://api.anthropic.com`.
+   - Hoặc dùng **proxy tương thích Anthropic** (vd shopaikey.com): đặt `CAU_HINH.apiBaseUrl = "https://api.shopaikey.com"` trong [Code.gs](Code.gs).
 2. Trong Apps Script: **Project Settings (bánh răng) → Script properties → Add property**:
-   - Tên: `CLAUDE_API_KEY` — Giá trị: dán API key.
+   - Tên: `CLAUDE_API_KEY` — Giá trị: dán API key (KHÔNG ghi key thẳng vào code).
+   - ⚠️ Đừng chia sẻ key ra ngoài; nếu lỡ lộ thì đổi key mới ngay.
 3. **Nguồn tin đã cắm sẵn**: Cổng thông tin Đoàn ĐBQH & HĐND tỉnh Thanh Hóa
    (`dbndthanhhoa.gov.vn`). Trang này **không có RSS** nên script đọc thẳng HTML
    (mục `CAU_HINH.nguonPortal`). Muốn thêm nguồn khác:
