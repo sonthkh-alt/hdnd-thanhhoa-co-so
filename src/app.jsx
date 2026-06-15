@@ -6,8 +6,6 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 
 import App from "./components/App";
-// CSS gốc của bộ giao diện zmp-ui (cần import thủ công khi chạy bản web).
-import "zmp-ui/zaui.css";
 import "./css/app.css";
 
 // Tìm thẻ <div id="app"> trong index.html và render ứng dụng React vào đó.

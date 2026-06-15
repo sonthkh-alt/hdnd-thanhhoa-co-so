@@ -2,17 +2,13 @@
 // PHÂN HỆ 3: GỬI KIẾN NGHỊ & VƯỚNG MẮC
 // Biểu mẫu cho cán bộ xã/phường gửi phản ánh tới HĐND tỉnh.
 // Có kiểm tra dữ liệu (validation) trước khi gửi.
+// Viết bằng React + TailwindCSS thuần (input/select/textarea gốc HTML).
 // ============================================================
 import React, { useEffect, useState } from "react";
-import { Page, Header, Input, Select, Button, Box, useSnackbar } from "zmp-ui";
+import { AppHeader } from "./common";
 import { fetchDepartments, submitFeedback } from "../services/api";
 
-const { Option } = Select;
-const { TextArea } = Input;
-
 export default function FeedbackComponent() {
-  const { openSnackbar } = useSnackbar(); // hiện thông báo dạng toast
-
   const [departments, setDepartments] = useState([]); // danh mục các Ban
   const [form, setForm] = useState({
     title: "",
@@ -20,6 +16,7 @@ export default function FeedbackComponent() {
     department: "",
     sender: "",
   });
+  const [error, setError] = useState(""); // thông báo lỗi nhập liệu
   const [submitting, setSubmitting] = useState(false); // đang gửi
   const [done, setDone] = useState(false); // gửi thành công
 
@@ -35,12 +32,10 @@ export default function FeedbackComponent() {
 
   // Xử lý khi bấm nút Gửi.
   const handleSubmit = async () => {
+    setError("");
     // --- Kiểm tra dữ liệu bắt buộc ---
     if (!form.title.trim() || !form.content.trim() || !form.department) {
-      openSnackbar({
-        type: "warning",
-        text: "Vui lòng nhập đủ Tiêu đề, Nội dung và chọn Ban chuyên trách.",
-      });
+      setError("Vui lòng nhập đủ Tiêu đề, Nội dung và chọn Ban chuyên trách.");
       return;
     }
 
@@ -54,7 +49,7 @@ export default function FeedbackComponent() {
       });
       setDone(true); // chuyển sang màn hình cảm ơn
     } catch (err) {
-      openSnackbar({ type: "error", text: "Gửi thất bại, vui lòng thử lại." });
+      setError("Gửi thất bại, vui lòng thử lại.");
     } finally {
       setSubmitting(false);
     }
@@ -63,14 +58,15 @@ export default function FeedbackComponent() {
   // Soạn kiến nghị mới (reset form).
   const resetForm = () => {
     setForm({ title: "", content: "", department: "", sender: "" });
+    setError("");
     setDone(false);
   };
 
   // ----- MÀN HÌNH XÁC NHẬN ĐÃ GỬI -----
   if (done) {
     return (
-      <Page className="bg-gray-50">
-        <Header title="Gửi thành công" />
+      <div className="bg-gray-50 min-h-screen">
+        <AppHeader title="Gửi thành công" />
         <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
           <div className="text-6xl mb-4">✅</div>
           <h2 className="text-xl font-bold text-gray-800">
@@ -87,66 +83,91 @@ export default function FeedbackComponent() {
             ✍️ Gửi kiến nghị khác
           </button>
         </div>
-      </Page>
+      </div>
     );
   }
 
+  // Class dùng chung cho các ô nhập, gom lại cho gọn.
+  const inputClass =
+    "w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary";
+  const labelClass = "block text-sm font-semibold text-gray-700 mb-1";
+
   // ----- MÀN HÌNH BIỂU MẪU -----
   return (
-    <Page className="bg-gray-50">
-      <Header title="✍️ Gửi Kiến Nghị & Vướng Mắc" />
-      <Box className="p-4 space-y-4">
+    <div className="bg-gray-50 min-h-screen">
+      <AppHeader title="✍️ Gửi Kiến Nghị & Vướng Mắc" />
+      <div className="p-4 space-y-4">
         {/* Tiêu đề */}
-        <Input
-          label="Tiêu đề kiến nghị *"
-          placeholder="VD: Vướng mắc trong cấp Giấy chứng nhận QSDĐ"
-          value={form.title}
-          onChange={(e) => updateField("title", e.target.value)}
-        />
+        <div>
+          <label className={labelClass}>Tiêu đề kiến nghị *</label>
+          <input
+            className={inputClass}
+            placeholder="VD: Vướng mắc trong cấp Giấy chứng nhận QSDĐ"
+            value={form.title}
+            onChange={(e) => updateField("title", e.target.value)}
+          />
+        </div>
 
         {/* Nội dung chi tiết */}
-        <TextArea
-          label="Nội dung vướng mắc *"
-          placeholder="Mô tả chi tiết vướng mắc về đất đai, ngân sách, tư pháp..."
-          rows={5}
-          value={form.content}
-          onChange={(e) => updateField("content", e.target.value)}
-        />
+        <div>
+          <label className={labelClass}>Nội dung vướng mắc *</label>
+          <textarea
+            className={inputClass}
+            rows={5}
+            placeholder="Mô tả chi tiết vướng mắc về đất đai, ngân sách, tư pháp..."
+            value={form.content}
+            onChange={(e) => updateField("content", e.target.value)}
+          />
+        </div>
 
         {/* Chọn Ban chuyên trách */}
-        <Select
-          label="Gửi tới Ban chuyên trách *"
-          placeholder="Chọn Ban tiếp nhận"
-          value={form.department}
-          onChange={(value) => updateField("department", value)}
-        >
-          {departments.map((d) => (
-            <Option key={d.value} value={d.value} title={d.label} />
-          ))}
-        </Select>
+        <div>
+          <label className={labelClass}>Gửi tới Ban chuyên trách *</label>
+          <select
+            className={inputClass}
+            value={form.department}
+            onChange={(e) => updateField("department", e.target.value)}
+          >
+            <option value="">-- Chọn Ban tiếp nhận --</option>
+            {departments.map((d) => (
+              <option key={d.value} value={d.value}>
+                {d.label}
+              </option>
+            ))}
+          </select>
+        </div>
 
         {/* Người gửi (không bắt buộc) */}
-        <Input
-          label="Người gửi / Đơn vị (không bắt buộc)"
-          placeholder="VD: Nguyễn Văn A - UBND xã Đông Sơn"
-          value={form.sender}
-          onChange={(e) => updateField("sender", e.target.value)}
-        />
+        <div>
+          <label className={labelClass}>Người gửi / Đơn vị (không bắt buộc)</label>
+          <input
+            className={inputClass}
+            placeholder="VD: Nguyễn Văn A - UBND xã Đông Sơn"
+            value={form.sender}
+            onChange={(e) => updateField("sender", e.target.value)}
+          />
+        </div>
+
+        {/* Thông báo lỗi (nếu có) */}
+        {error && (
+          <div className="bg-red-50 border border-red-300 text-red-700 text-sm rounded-lg px-3 py-2">
+            ⚠️ {error}
+          </div>
+        )}
 
         {/* Nút gửi */}
-        <Button
-          fullWidth
-          loading={submitting}
+        <button
           onClick={handleSubmit}
-          className="mt-2"
+          disabled={submitting}
+          className="w-full bg-primary text-white py-3 rounded-full font-semibold shadow active:scale-95 transition disabled:opacity-60"
         >
-          📨 Gửi kiến nghị
-        </Button>
+          {submitting ? "Đang gửi..." : "📨 Gửi kiến nghị"}
+        </button>
 
         <p className="text-xs text-gray-400 text-center">
           Thông tin được gửi trực tiếp tới Văn phòng Đoàn ĐBQH và HĐND tỉnh.
         </p>
-      </Box>
-    </Page>
+      </div>
+    </div>
   );
 }

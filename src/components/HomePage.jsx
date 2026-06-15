@@ -1,8 +1,8 @@
 // ============================================================
 // TRANG CHỦ - HIỂN THỊ 3 PHÂN HỆ DƯỚI DẠNG THẺ (CARD) BẤM ĐƯỢC
+// Viết bằng React + TailwindCSS thuần.
 // ============================================================
 import React from "react";
-import { Page } from "zmp-ui";
 import { useNavigate } from "react-router-dom";
 
 // Khai báo dữ liệu 3 phân hệ. Tách riêng để dễ thêm/bớt sau này.
@@ -38,7 +38,7 @@ export default function HomePage() {
   const navigate = useNavigate();
 
   return (
-    <Page className="bg-gray-50 min-h-screen">
+    <div className="bg-gray-50 min-h-screen pb-10">
       {/* ----- PHẦN ĐẦU TRANG (HERO) ----- */}
       <div className="bg-gradient-to-br from-primary to-primary-dark px-5 pt-10 pb-8 text-white rounded-b-3xl shadow-lg">
         <p className="text-sm opacity-90">Thường trực HĐND tỉnh Thanh Hóa</p>
@@ -73,6 +73,6 @@ export default function HomePage() {
       <p className="text-center text-xs text-gray-400 mt-8 px-6">
         Phiên bản thử nghiệm (Prototype) • Dữ liệu phục vụ minh họa
       </p>
-    </Page>
+    </div>
   );
 }

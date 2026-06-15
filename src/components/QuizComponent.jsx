@@ -5,9 +5,10 @@
 //   2. Hiện từng câu, người dùng chọn đáp án.
 //   3. NGAY sau khi chọn: tô màu Đúng/Sai + hiện lời giải thích.
 //   4. Hết câu -> màn hình chúc mừng kèm tổng điểm.
+// Viết bằng React + TailwindCSS thuần.
 // ============================================================
 import React, { useEffect, useState } from "react";
-import { Page, Header, Box, Spinner } from "zmp-ui";
+import { AppHeader, Spinner } from "./common";
 import { fetchQuiz } from "../services/api";
 
 export default function QuizComponent() {
@@ -58,12 +59,10 @@ export default function QuizComponent() {
   // ----- TRẠNG THÁI ĐANG TẢI -----
   if (loading) {
     return (
-      <Page className="bg-gray-50">
-        <Header title="🎯 Thử Tài Đại Biểu" />
-        <Box className="flex justify-center py-16">
-          <Spinner />
-        </Box>
-      </Page>
+      <div className="bg-gray-50 min-h-screen">
+        <AppHeader title="🎯 Thử Tài Đại Biểu" />
+        <Spinner />
+      </div>
     );
   }
 
@@ -72,8 +71,8 @@ export default function QuizComponent() {
     const total = questions.length;
     const passed = score >= Math.ceil(total / 2); // đạt nếu đúng >= 1 nửa
     return (
-      <Page className="bg-gray-50">
-        <Header title="Kết quả" />
+      <div className="bg-gray-50 min-h-screen">
+        <AppHeader title="Kết quả" />
         <div className="flex flex-col items-center justify-center px-6 py-12 text-center">
           <div className="text-6xl mb-4">{passed ? "🎉" : "💪"}</div>
           <h2 className="text-2xl font-bold text-gray-800">
@@ -101,7 +100,7 @@ export default function QuizComponent() {
             🔄 Làm lại
           </button>
         </div>
-      </Page>
+      </div>
     );
   }
 
@@ -110,8 +109,8 @@ export default function QuizComponent() {
   const answered = selected !== null; // đã chọn đáp án chưa
 
   return (
-    <Page className="bg-gray-50">
-      <Header title="🎯 Thử Tài Đại Biểu" />
+    <div className="bg-gray-50 min-h-screen">
+      <AppHeader title="🎯 Thử Tài Đại Biểu" />
       <div className="p-4">
         {/* Thanh tiến độ */}
         <div className="flex items-center justify-between mb-2">
@@ -189,6 +188,6 @@ export default function QuizComponent() {
           </button>
         )}
       </div>
-    </Page>
+    </div>
   );
 }

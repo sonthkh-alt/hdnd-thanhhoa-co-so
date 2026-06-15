@@ -2,9 +2,10 @@
 // PHÂN HỆ 1: ĐIỂM TIN PHÁP LUẬT
 // - Hiển thị danh sách bản tin dạng thẻ.
 // - Bấm vào 1 bản tin sẽ mở chế độ xem Infographic (slide ảnh lật).
+// Viết bằng React + TailwindCSS thuần.
 // ============================================================
 import React, { useEffect, useState } from "react";
-import { Page, Header, Box, Spinner } from "zmp-ui";
+import { AppHeader, Spinner } from "./common";
 import { fetchNews } from "../services/api";
 
 export default function NewsComponent() {
@@ -37,10 +38,20 @@ export default function NewsComponent() {
   // ----- CHẾ ĐỘ XEM CHI TIẾT (INFOGRAPHIC) -----
   if (selected) {
     return (
-      <Page className="bg-black flex flex-col">
-        <Header title={selected.title} showBackIcon={false} />
+      <div className="bg-black min-h-screen flex flex-col">
+        {/* Tiêu đề + nút đóng quay lại danh sách */}
+        <div className="sticky top-0 z-10 bg-black/90 text-white flex items-center gap-3 px-4 py-3">
+          <button
+            onClick={() => setSelected(null)}
+            className="text-2xl leading-none w-8 h-8 flex items-center justify-center -ml-1"
+          >
+            ‹
+          </button>
+          <h1 className="font-semibold text-sm truncate">{selected.title}</h1>
+        </div>
+
         {/* Ảnh infographic chiếm phần lớn màn hình */}
-        <div className="flex-1 flex items-center justify-center px-2">
+        <div className="flex-1 flex items-center justify-center px-2 py-4">
           <img
             src={selected.slides[slideIndex]}
             alt={`Slide ${slideIndex + 1}`}
@@ -74,27 +85,25 @@ export default function NewsComponent() {
         >
           ← Quay lại danh sách tin
         </button>
-      </Page>
+      </div>
     );
   }
 
   // ----- CHẾ ĐỘ DANH SÁCH TIN -----
   return (
-    <Page className="bg-gray-50">
-      <Header title="📰 Điểm Tin Pháp Luật" />
+    <div className="bg-gray-50 min-h-screen">
+      <AppHeader title="📰 Điểm Tin Pháp Luật" />
 
       {/* Đang tải dữ liệu */}
       {loading ? (
-        <Box className="flex justify-center py-16">
-          <Spinner />
-        </Box>
+        <Spinner />
       ) : (
         <div className="p-4 space-y-4">
           {news.map((item) => (
             <div
               key={item.id}
               onClick={() => openNews(item)}
-              className="bg-white rounded-2xl overflow-hidden shadow-sm active:scale-[0.98] transition-transform"
+              className="bg-white rounded-2xl overflow-hidden shadow-sm active:scale-[0.98] transition-transform cursor-pointer"
             >
               {/* Ảnh bìa */}
               <img
@@ -121,6 +130,6 @@ export default function NewsComponent() {
           ))}
         </div>
       )}
-    </Page>
+    </div>
   );
 }
