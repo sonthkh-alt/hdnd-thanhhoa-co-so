@@ -178,7 +178,14 @@ function tomTatBangClaude_(tin) {
     "4. Nếu bài KHÔNG liên quan tới chính quyền địa phương / HĐND / pháp luật / " +
     "hoạt động cơ sở, đặt category = 'BỎ QUA'.\n" +
     "Chỉ phục vụ chủ đề: chính quyền 2 cấp, HĐND cấp xã, hoạt động Thường trực " +
-    "HĐND tỉnh Thanh Hóa, tin pháp luật mới cho cơ sở.";
+    "HĐND tỉnh Thanh Hóa, tin pháp luật mới cho cơ sở.\n\n" +
+    "ĐỊNH DẠNG ĐẦU RA: Trả về DUY NHẤT một object JSON hợp lệ, KHÔNG kèm bất kỳ " +
+    "văn bản giải thích nào, KHÔNG dùng dấu ``` hay markdown. Cấu trúc chính xác:\n" +
+    '{"category": string, "title": string, "summary": string, "icon": string (1 emoji), ' +
+    '"theme": {"c1": string (mã màu hex), "c2": string (hex đậm hơn), "accent": string (hex nổi)}, ' +
+    '"infographic": {"badge": string (in hoa), "headline": string, ' +
+    '"stats": [{"v": string, "l": string}], "points": [string]}}\n' +
+    "Trong đó 'stats' tối đa 3 mục (chỉ ghi số nếu bài nêu rõ), 'points' 2-4 ý.";
 
   const noiDung =
     "TIÊU ĐỀ: " + tin.title + "\n\nNỘI DUNG:\n" + (tin.description || "");
@@ -250,14 +257,29 @@ function tomTatBangClaude_(tin) {
     return null;
   }
 
-  // Lấy phần văn bản JSON trong khối content đầu tiên rồi parse.
+  // Lấy phần văn bản JSON trong khối content đầu tiên rồi parse an toàn.
   const data = JSON.parse(res.getContentText());
   const block = (data.content || []).find(function (b) { return b.type === "text"; });
   if (!block) return null;
+  return parseJsonAnToan_(block.text);
+}
+
+// Parse JSON chống lỗi: bóc bỏ dấu ```json ... ``` và lấy đúng khối {...}.
+// Cần thiết vì một số endpoint (proxy) không tuân theo output_config,
+// model có thể trả JSON bọc trong markdown.
+function parseJsonAnToan_(text) {
+  if (!text) return null;
+  let s = String(text).trim();
+  // Bỏ rào markdown ```json ... ```
+  s = s.replace(/```(?:json)?/gi, "").trim();
+  // Lấy từ dấu { đầu tiên tới dấu } cuối cùng.
+  const dau = s.indexOf("{");
+  const cuoi = s.lastIndexOf("}");
+  if (dau >= 0 && cuoi > dau) s = s.substring(dau, cuoi + 1);
   try {
-    return JSON.parse(block.text);
-  } catch (e2) {
-    Logger.log("Không parse được JSON từ model: " + block.text);
+    return JSON.parse(s);
+  } catch (e) {
+    Logger.log("Không parse được JSON từ model: " + text);
     return null;
   }
 }
