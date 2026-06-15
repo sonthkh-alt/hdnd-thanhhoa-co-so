@@ -1,0 +1,59 @@
+# ============================================================
+# TỰ ĐỘNG BUILD & DEPLOY BẢN WEB LÊN GITHUB PAGES
+# Cứ mỗi lần bạn push code lên nhánh main, GitHub sẽ tự:
+#   1. Cài thư viện (npm install)
+#   2. Build bản web (vite build)
+#   3. Đăng lên GitHub Pages
+# Bạn KHÔNG cần cài Node hay build thủ công trên máy.
+# ============================================================
+name: Deploy Web len GitHub Pages
+
+on:
+  push:
+    branches: [main] # chạy khi push lên nhánh main
+  workflow_dispatch: # cho phép bấm chạy tay trong tab Actions
+
+# Quyền cần thiết để đăng lên Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Tai code ve
+        uses: actions/checkout@v4
+
+      - name: Cai dat Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Cai thu vien
+        run: npm install
+
+      # Build bản web. --base trỏ đúng vào tên repo để nạp file tĩnh chuẩn.
+      - name: Build ban web
+        run: npx vite build --config vite.config.web.mjs --base=/${{ github.event.repository.name }}/
+
+      # Tạo file 404.html (copy từ index.html) để tải lại trang không bị lỗi.
+      - name: Tao 404 fallback
+        run: cp dist/index.html dist/404.html
+
+      - name: Dong goi de deploy
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Dang len GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

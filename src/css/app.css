@@ -1,0 +1,21 @@
+/* Nạp 3 lớp nền tảng của TailwindCSS */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Một vài tinh chỉnh chung cho toàn app */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Ẩn thanh cuộn cho gọn gàng trên mobile nhưng vẫn cuộn được */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

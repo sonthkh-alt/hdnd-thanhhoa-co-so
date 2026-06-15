@@ -1,0 +1,16 @@
+{
+  "app": {
+    "appId": "DAN_APP_ID_CUA_BAN_VAO_DAY",
+    "title": "HĐND Thanh Hóa đồng hành với Cơ Sở",
+    "headerColor": "#b91c1c",
+    "textColor": "white",
+    "leftButton": "none",
+    "statusBar": "normal",
+    "actionBarHidden": true,
+    "hideAndroidBottomNavigationBar": true,
+    "hideIOSSafeAreaBottom": true
+  },
+  "listCSS": [],
+  "listSyncJS": [],
+  "listAsyncJS": []
+}

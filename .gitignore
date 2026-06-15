@@ -1,0 +1,17 @@
+# Thư viện cài tự động - KHÔNG đẩy lên GitHub (rất nặng, máy nào cũng tự cài lại)
+node_modules/
+
+# Kết quả build
+dist/
+www/
+.zmp/
+
+# File môi trường / bí mật
+.env
+.env.local
+
+# File log & rác hệ thống
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
