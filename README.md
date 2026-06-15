@@ -57,11 +57,12 @@ zmp start
 
 **Tab 1: `TinTuc`** (Phân hệ Điểm tin pháp luật)
 
-| id | title | summary | category | coverImage | slides | publishedAt |
-|----|-------|---------|----------|-----------|--------|-------------|
-| TT001 | Luật Đất đai 2024... | Tóm tắt ngắn | Đất đai | https://.../bia.jpg | https://.../s1.jpg, https://.../s2.jpg | 2025-06-01 |
+| id | category | title | summary | source | publishedAt | icon | theme | infographic |
+|----|----------|-------|---------|--------|-------------|------|-------|-------------|
+| TT001 | Chính quyền 2 cấp | Vận hành mô hình... | Tóm tắt ngắn | Nguồn... | 2026-06-10 | 🏛️ | `{"c1":"#C8102E","c2":"#7A0A1B","accent":"#F4B400"}` | `{"badge":"...","headline":"...","stats":[{"v":"2","l":"cấp"}],"points":["..."]}` |
 
-> Cột `slides`: dán nhiều link ảnh, **cách nhau bằng dấu phẩy** (hàm `fetchNews` tự tách thành mảng để lật slide).
+> Không cần ảnh thiết kế sẵn nữa. Hai cột `theme` và `infographic` chứa **chuỗi JSON** — app tự dựng ra poster infographic đẹp từ dữ liệu này (xem [Infographic.jsx](src/components/Infographic.jsx)).
+> Phần JSON này có thể do **AI sinh tự động** từ tin lấy trên internet (xem khối hướng dẫn cuối file [api.js](src/services/api.js)), cán bộ chỉ việc duyệt trước khi công khai.
 
 **Tab 2: `CauHoi`** (Phân hệ Trắc nghiệm)
 

@@ -39,15 +39,28 @@ export async function fetchNews() {
   const res = await fetch(API_CONFIG.newsUrl);
   if (!res.ok) throw new Error("Không tải được tin tức");
   const rows = await res.json();
-  // Chuẩn hóa dữ liệu từ Sheet: cột "slides" lưu dạng chuỗi
-  // các URL cách nhau bởi dấu phẩy => tách thành mảng.
+  // Chuẩn hóa dữ liệu từ Sheet.
+  // Trên Sheet, 2 cột "theme" và "infographic" lưu dưới dạng chuỗi JSON
+  // (do AI hoặc cán bộ sinh ra) => ta parse lại thành object để app dùng.
   return rows.map((row) => ({
     ...row,
-    slides: (row.slides || "")
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean),
+    readTime: Number(row.readTime) || 3,
+    theme:
+      typeof row.theme === "string" ? safeJson(row.theme) : row.theme,
+    infographic:
+      typeof row.infographic === "string"
+        ? safeJson(row.infographic)
+        : row.infographic,
   }));
+}
+
+// Parse JSON an toàn: lỗi thì trả về object rỗng thay vì làm sập app.
+function safeJson(str) {
+  try {
+    return JSON.parse(str);
+  } catch {
+    return {};
+  }
 }
 
 // ------------------------------------------------------------
@@ -107,3 +120,29 @@ export async function submitFeedback(payload) {
   if (!res.ok) throw new Error("Gửi kiến nghị thất bại");
   return res.json();
 }
+
+// ============================================================
+// (THAM KHẢO) LUỒNG "LẤY TIN INTERNET -> AI SINH INFOGRAPHIC"
+// App tĩnh không tự đọc tin từ internet được (vướng CORS, không có máy chủ).
+// Cần một "trợ lý nền" chạy định kỳ ở phía sau, gồm 4 bước:
+//
+//   1) THU THẬP: máy chủ nhỏ (Google Apps Script / n8n / serverless) đọc
+//      RSS/cổng thông tin về: chính quyền địa phương 2 cấp, hoạt động HĐND
+//      cấp xã, Thường trực HĐND tỉnh Thanh Hóa, tin pháp luật mới.
+//
+//   2) TÓM TẮT BẰNG AI: đưa bài viết cho mô hình ngôn ngữ (vd Claude) kèm
+//      yêu cầu trả về ĐÚNG cấu trúc JSON mà app cần:
+//        { category, title, summary, source, icon, theme:{c1,c2,accent},
+//          infographic:{ badge, headline, stats:[{v,l}], points:[...] } }
+//
+//   3) SINH ẢNH (tùy chọn): nếu muốn ra file ảnh thật, dùng API tạo ảnh
+//      (vd Canva/Bg image generation) từ JSON trên. Còn nếu dùng app này,
+//      KHÔNG cần bước ảnh — component Infographic.jsx tự dựng poster đẹp
+//      từ chính JSON đó, luôn sắc nét và đồng bộ thương hiệu.
+//
+//   4) GHI VÀO SHEET: máy chủ ghi mỗi tin thành 1 dòng ở sheet "TinTuc"
+//      (cột theme/infographic lưu chuỗi JSON). App đọc lên là hiển thị ngay.
+//
+// => Cán bộ chỉ cần duyệt nội dung do AI đề xuất trên Google Sheet trước
+//    khi công khai, đảm bảo chính xác và đúng định hướng.
+// ============================================================

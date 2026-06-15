@@ -1,11 +1,9 @@
 // ============================================================
 // PHÂN HỆ 2: THỬ TÀI ĐẠI BIỂU (TRẮC NGHIỆM)
-// Luồng hoạt động:
 //   1. Tải bộ câu hỏi từ API.
-//   2. Hiện từng câu, người dùng chọn đáp án.
-//   3. NGAY sau khi chọn: tô màu Đúng/Sai + hiện lời giải thích.
-//   4. Hết câu -> màn hình chúc mừng kèm tổng điểm.
-// Viết bằng React + TailwindCSS thuần.
+//   2. Hiện từng câu; chọn xong tô màu Đúng/Sai + hiện lời giải thích.
+//   3. Hết câu -> màn hình chúc mừng kèm tổng điểm.
+// React + TailwindCSS thuần, phong cách "HĐND số".
 // ============================================================
 import React, { useEffect, useState } from "react";
 import { AppHeader, Spinner } from "./common";
@@ -14,13 +12,11 @@ import { fetchQuiz } from "../services/api";
 export default function QuizComponent() {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [current, setCurrent] = useState(0);
+  const [selected, setSelected] = useState(null);
+  const [score, setScore] = useState(0);
+  const [finished, setFinished] = useState(false);
 
-  const [current, setCurrent] = useState(0); // chỉ số câu hỏi hiện tại
-  const [selected, setSelected] = useState(null); // đáp án người dùng vừa chọn
-  const [score, setScore] = useState(0); // tổng số câu đúng
-  const [finished, setFinished] = useState(false); // đã hoàn thành chưa
-
-  // Tải bộ câu hỏi khi mở trang.
   useEffect(() => {
     fetchQuiz()
       .then((data) => setQuestions(data))
@@ -28,27 +24,23 @@ export default function QuizComponent() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Xử lý khi người dùng bấm chọn 1 đáp án.
+  // Chọn 1 đáp án (khóa lại sau khi chọn).
   const handleSelect = (index) => {
-    if (selected !== null) return; // đã chọn rồi thì khóa, không cho đổi
+    if (selected !== null) return;
     setSelected(index);
-    // Nếu chọn đúng thì cộng điểm.
-    if (index === questions[current].correctIndex) {
-      setScore((s) => s + 1);
-    }
+    if (index === questions[current].correctIndex) setScore((s) => s + 1);
   };
 
-  // Sang câu tiếp theo (hoặc kết thúc nếu là câu cuối).
+  // Sang câu tiếp / kết thúc.
   const nextQuestion = () => {
     if (current + 1 < questions.length) {
       setCurrent((c) => c + 1);
-      setSelected(null); // reset lựa chọn cho câu mới
+      setSelected(null);
     } else {
       setFinished(true);
     }
   };
 
-  // Làm lại từ đầu.
   const restart = () => {
     setCurrent(0);
     setSelected(null);
@@ -56,46 +48,49 @@ export default function QuizComponent() {
     setFinished(false);
   };
 
-  // ----- TRẠNG THÁI ĐANG TẢI -----
   if (loading) {
     return (
-      <div className="bg-gray-50 min-h-screen">
+      <div className="min-h-screen bg-gray-100">
         <AppHeader title="🎯 Thử Tài Đại Biểu" />
-        <Spinner />
+        <Spinner label="Đang tải câu hỏi..." />
       </div>
     );
   }
 
-  // ----- MÀN HÌNH CHÚC MỪNG (KHI HOÀN THÀNH) -----
+  // ----- MÀN HÌNH CHÚC MỪNG -----
   if (finished) {
     const total = questions.length;
-    const passed = score >= Math.ceil(total / 2); // đạt nếu đúng >= 1 nửa
+    const percent = Math.round((score / total) * 100);
+    const passed = score >= Math.ceil(total / 2);
     return (
-      <div className="bg-gray-50 min-h-screen">
+      <div className="min-h-screen bg-gray-100">
         <AppHeader title="Kết quả" />
-        <div className="flex flex-col items-center justify-center px-6 py-12 text-center">
-          <div className="text-6xl mb-4">{passed ? "🎉" : "💪"}</div>
-          <h2 className="text-2xl font-bold text-gray-800">
-            {passed ? "Chúc mừng!" : "Cố gắng thêm nhé!"}
+        <div className="flex flex-col items-center justify-center px-6 py-10 text-center">
+          <div className="text-7xl mb-3 animate-float">
+            {passed ? "🎉" : "💪"}
+          </div>
+          <h2 className="text-2xl font-extrabold text-ink">
+            {passed ? "Xuất sắc!" : "Cố gắng thêm nhé!"}
           </h2>
-          <p className="text-gray-600 mt-2">
+          <p className="text-ink-soft mt-2">
             Bạn trả lời đúng{" "}
-            <span className="font-bold text-primary text-lg">
-              {score}/{total}
-            </span>{" "}
-            câu hỏi.
+            <span className="font-bold text-primary">{score}/{total}</span> câu.
           </p>
 
-          {/* Vòng tròn hiển thị điểm */}
-          <div className="my-8 w-32 h-32 rounded-full border-8 border-primary flex items-center justify-center">
-            <span className="text-3xl font-bold text-primary">
-              {Math.round((score / total) * 100)}%
-            </span>
+          {/* Vòng tròn điểm số có viền vàng */}
+          <div className="my-8 relative w-40 h-40">
+            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary to-primary-dark shadow-glow" />
+            <div className="absolute inset-2 rounded-full bg-white flex flex-col items-center justify-center">
+              <span className="text-4xl font-extrabold text-primary">
+                {percent}%
+              </span>
+              <span className="text-xs text-ink-soft">chính xác</span>
+            </div>
           </div>
 
           <button
             onClick={restart}
-            className="bg-primary text-white px-8 py-3 rounded-full font-semibold shadow active:scale-95 transition"
+            className="bg-gradient-to-r from-primary to-primary-dark text-white px-8 py-3 rounded-full font-bold shadow-glow active:scale-95 transition"
           >
             🔄 Làm lại
           </button>
@@ -106,85 +101,83 @@ export default function QuizComponent() {
 
   // ----- MÀN HÌNH LÀM BÀI -----
   const q = questions[current];
-  const answered = selected !== null; // đã chọn đáp án chưa
+  const answered = selected !== null;
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="min-h-screen bg-gray-100">
       <AppHeader title="🎯 Thử Tài Đại Biểu" />
       <div className="p-4">
-        {/* Thanh tiến độ */}
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm text-gray-500">
-            Câu {current + 1}/{questions.length}
-          </span>
-          <span className="text-sm font-semibold text-primary">
-            Điểm: {score}
-          </span>
-        </div>
-        <div className="w-full h-2 bg-gray-200 rounded-full mb-5">
-          <div
-            className="h-2 bg-primary rounded-full transition-all"
-            style={{ width: `${((current + 1) / questions.length) * 100}%` }}
-          />
+        {/* Thẻ tiến độ */}
+        <div className="bg-white rounded-2xl p-4 shadow-soft mb-4">
+          <div className="flex items-center justify-between mb-2 text-sm">
+            <span className="text-ink-soft font-medium">
+              Câu {current + 1}/{questions.length}
+            </span>
+            <span className="font-bold text-primary">⭐ {score} điểm</span>
+          </div>
+          <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-primary to-primary-dark rounded-full transition-all duration-500"
+              style={{ width: `${((current + 1) / questions.length) * 100}%` }}
+            />
+          </div>
         </div>
 
-        {/* Nội dung câu hỏi */}
-        <h3 className="font-bold text-lg text-gray-800 mb-4 leading-snug">
+        {/* Câu hỏi */}
+        <h3 className="font-bold text-lg text-ink mb-4 leading-snug px-1">
           {q.question}
         </h3>
 
-        {/* Danh sách đáp án */}
+        {/* Đáp án */}
         <div className="space-y-3">
           {q.options.map((opt, i) => {
-            // Xác định màu nền của từng đáp án sau khi người dùng chọn.
-            let style = "bg-white border-gray-200 text-gray-700";
+            let style = "bg-white border-gray-200 text-ink";
             if (answered) {
-              if (i === q.correctIndex) {
-                // Đáp án đúng -> luôn tô xanh.
-                style = "bg-green-50 border-green-500 text-green-700";
-              } else if (i === selected) {
-                // Đáp án người dùng chọn sai -> tô đỏ.
+              if (i === q.correctIndex)
+                style = "bg-emerald-50 border-emerald-500 text-emerald-700";
+              else if (i === selected)
                 style = "bg-red-50 border-red-500 text-red-700";
-              } else {
-                style = "bg-white border-gray-200 text-gray-400";
-              }
+              else style = "bg-white border-gray-100 text-gray-400";
             }
             return (
               <button
                 key={i}
                 onClick={() => handleSelect(i)}
                 disabled={answered}
-                className={`w-full text-left px-4 py-3 rounded-xl border-2 font-medium transition ${style}`}
+                className={`w-full text-left px-4 py-3.5 rounded-2xl border-2 font-medium transition flex items-center gap-3 ${style}`}
               >
-                <span className="font-bold mr-2">
-                  {String.fromCharCode(65 + i)}.
+                <span className="w-7 h-7 rounded-full bg-black/5 flex items-center justify-center text-sm font-bold shrink-0">
+                  {String.fromCharCode(65 + i)}
                 </span>
-                {opt}
-                {/* Ký hiệu đúng/sai */}
-                {answered && i === q.correctIndex && " ✓"}
-                {answered && i === selected && i !== q.correctIndex && " ✗"}
+                <span className="flex-1">{opt}</span>
+                {answered && i === q.correctIndex && <span>✅</span>}
+                {answered && i === selected && i !== q.correctIndex && (
+                  <span>❌</span>
+                )}
               </button>
             );
           })}
         </div>
 
-        {/* Ô giải thích - chỉ hiện sau khi đã chọn */}
+        {/* Giải thích */}
         {answered && (
-          <div className="mt-4 p-4 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg">
-            <p className="text-sm font-semibold text-blue-800 mb-1">
-              💡 Giải thích
+          <div className="mt-4 p-4 bg-blue-50 border-l-4 border-blue-400 rounded-r-2xl animate-fadeUp">
+            <p className="text-sm font-bold text-blue-800 mb-1">💡 Giải thích</p>
+            <p className="text-sm text-blue-700 leading-relaxed">
+              {q.explanation}
             </p>
-            <p className="text-sm text-blue-700">{q.explanation}</p>
           </div>
         )}
 
-        {/* Nút chuyển câu - chỉ hiện sau khi đã chọn */}
+        {/* Nút chuyển câu */}
         {answered && (
           <button
             onClick={nextQuestion}
-            className="w-full bg-primary text-white py-3 rounded-full font-semibold mt-5 shadow active:scale-95 transition"
+            className="w-full bg-gradient-to-r from-primary to-primary-dark text-white py-3.5 rounded-full font-bold mt-5 shadow-glow active:scale-95 transition animate-fadeUp"
           >
-            {current + 1 < questions.length ? "Câu tiếp theo →" : "Xem kết quả 🏁"}
+            {current + 1 < questions.length
+              ? "Câu tiếp theo →"
+              : "Xem kết quả 🏁"}
           </button>
         )}
       </div>

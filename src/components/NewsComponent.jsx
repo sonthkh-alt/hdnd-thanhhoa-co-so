@@ -1,20 +1,20 @@
 // ============================================================
 // PHÂN HỆ 1: ĐIỂM TIN PHÁP LUẬT
-// - Hiển thị danh sách bản tin dạng thẻ.
-// - Bấm vào 1 bản tin sẽ mở chế độ xem Infographic (slide ảnh lật).
-// Viết bằng React + TailwindCSS thuần.
+// - Lọc tin theo danh mục (chính quyền 2 cấp, HĐND cấp xã...).
+// - Mỗi tin mở ra infographic nhiều trang để lật xem (dựng từ dữ liệu).
 // ============================================================
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { AppHeader, Spinner } from "./common";
+import InfographicPanel, { panelKeys } from "./Infographic";
 import { fetchNews } from "../services/api";
 
 export default function NewsComponent() {
-  const [news, setNews] = useState([]); // danh sách tin
-  const [loading, setLoading] = useState(true); // trạng thái đang tải
-  const [selected, setSelected] = useState(null); // bản tin đang xem chi tiết
-  const [slideIndex, setSlideIndex] = useState(0); // slide ảnh đang hiển thị
+  const [news, setNews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState("Tất cả"); // danh mục đang lọc
+  const [selected, setSelected] = useState(null); // tin đang xem infographic
+  const [panel, setPanel] = useState(0); // trang infographic đang hiển thị
 
-  // Tải dữ liệu tin tức 1 lần khi mở trang (useEffect chạy sau render đầu).
   useEffect(() => {
     fetchNews()
       .then((data) => setNews(data))
@@ -22,113 +22,157 @@ export default function NewsComponent() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Mở 1 bản tin -> reset về slide đầu tiên.
+  // Tạo danh sách danh mục từ dữ liệu (tự động, không cần khai báo tay).
+  const categories = useMemo(
+    () => ["Tất cả", ...new Set(news.map((n) => n.category))],
+    [news]
+  );
+
+  // Lọc tin theo danh mục đang chọn.
+  const visible =
+    filter === "Tất cả" ? news : news.filter((n) => n.category === filter);
+
+  // Mở 1 tin -> về trang đầu của infographic.
   const openNews = (item) => {
     setSelected(item);
-    setSlideIndex(0);
+    setPanel(0);
   };
 
-  // Chuyển slide. step = +1 (tiếp) hoặc -1 (lùi).
-  const changeSlide = (step) => {
-    const total = selected.slides.length;
-    // Dùng phép chia lấy dư để slide quay vòng (cuối -> đầu).
-    setSlideIndex((prev) => (prev + step + total) % total);
-  };
-
-  // ----- CHẾ ĐỘ XEM CHI TIẾT (INFOGRAPHIC) -----
+  // ----- CHẾ ĐỘ XEM INFOGRAPHIC (LẬT TRANG) -----
   if (selected) {
+    const keys = panelKeys(selected); // các trang có dữ liệu
+    const total = keys.length;
+    const go = (step) => setPanel((p) => (p + step + total) % total);
+
     return (
-      <div className="bg-black min-h-screen flex flex-col">
-        {/* Tiêu đề + nút đóng quay lại danh sách */}
-        <div className="sticky top-0 z-10 bg-black/90 text-white flex items-center gap-3 px-4 py-3">
+      <div
+        className="min-h-screen flex flex-col"
+        style={{
+          backgroundImage: `linear-gradient(160deg, ${selected.theme.c2}, #0b0b13)`,
+        }}
+      >
+        {/* Thanh trên: đóng + tiến độ trang */}
+        <div className="flex items-center gap-3 px-4 pt-4 pb-2 text-white">
           <button
             onClick={() => setSelected(null)}
-            className="text-2xl leading-none w-8 h-8 flex items-center justify-center -ml-1"
+            className="w-9 h-9 rounded-full glass flex items-center justify-center text-xl active:scale-90 transition"
           >
-            ‹
+            ✕
           </button>
-          <h1 className="font-semibold text-sm truncate">{selected.title}</h1>
+          {/* Vạch tiến độ từng trang (kiểu story) */}
+          <div className="flex-1 flex gap-1.5">
+            {keys.map((_, i) => (
+              <div
+                key={i}
+                className={`h-1 flex-1 rounded-full transition ${
+                  i <= panel ? "bg-white" : "bg-white/30"
+                }`}
+              />
+            ))}
+          </div>
         </div>
 
-        {/* Ảnh infographic chiếm phần lớn màn hình */}
-        <div className="flex-1 flex items-center justify-center px-2 py-4">
-          <img
-            src={selected.slides[slideIndex]}
-            alt={`Slide ${slideIndex + 1}`}
-            className="max-h-[70vh] w-auto rounded-lg object-contain"
-          />
+        {/* Poster infographic */}
+        <div className="flex-1 flex items-center justify-center px-4">
+          <div className="w-full max-w-sm animate-fadeUp" key={panel}>
+            <InfographicPanel item={selected} panel={keys[panel]} />
+          </div>
         </div>
 
-        {/* Thanh điều khiển lật slide */}
-        <div className="flex items-center justify-between px-6 py-4 bg-black">
+        {/* Điều khiển lật trang */}
+        <div className="flex items-center justify-between px-6 py-5">
           <button
-            onClick={() => changeSlide(-1)}
-            className="text-white bg-white/20 rounded-full w-12 h-12 text-xl"
+            onClick={() => go(-1)}
+            className="text-white glass rounded-full w-12 h-12 text-xl active:scale-90 transition"
           >
             ‹
           </button>
-          <span className="text-white text-sm">
-            {slideIndex + 1} / {selected.slides.length}
+          <span className="text-white/80 text-sm">
+            Trang {panel + 1}/{total}
           </span>
           <button
-            onClick={() => changeSlide(1)}
-            className="text-white bg-white/20 rounded-full w-12 h-12 text-xl"
+            onClick={() => go(1)}
+            className="text-white glass rounded-full w-12 h-12 text-xl active:scale-90 transition"
           >
             ›
           </button>
         </div>
-
-        {/* Nút quay lại danh sách */}
-        <button
-          onClick={() => setSelected(null)}
-          className="bg-primary text-white py-3 font-semibold"
-        >
-          ← Quay lại danh sách tin
-        </button>
       </div>
     );
   }
 
   // ----- CHẾ ĐỘ DANH SÁCH TIN -----
   return (
-    <div className="bg-gray-50 min-h-screen">
-      <AppHeader title="📰 Điểm Tin Pháp Luật" />
+    <div className="min-h-screen bg-gray-100">
+      <AppHeader
+        title="📰 Điểm Tin Pháp Luật"
+        subtitle="Cập nhật chính quyền 2 cấp • HĐND cơ sở"
+      />
 
-      {/* Đang tải dữ liệu */}
       {loading ? (
         <Spinner />
       ) : (
-        <div className="p-4 space-y-4">
-          {news.map((item) => (
-            <div
-              key={item.id}
-              onClick={() => openNews(item)}
-              className="bg-white rounded-2xl overflow-hidden shadow-sm active:scale-[0.98] transition-transform cursor-pointer"
-            >
-              {/* Ảnh bìa */}
-              <img
-                src={item.coverImage}
-                alt={item.title}
-                className="w-full h-44 object-cover"
-              />
-              <div className="p-4">
-                {/* Nhãn phân loại */}
-                <span className="inline-block bg-primary-light text-primary text-xs font-semibold px-2 py-1 rounded-full mb-2">
-                  {item.category}
-                </span>
-                <h3 className="font-bold text-gray-800 leading-snug">
-                  {item.title}
-                </h3>
-                <p className="text-gray-500 text-sm mt-1 line-clamp-2">
-                  {item.summary}
-                </p>
-                <p className="text-gray-400 text-xs mt-2">
-                  🗓 {item.publishedAt} • {item.slides.length} trang
-                </p>
+        <>
+          {/* Thanh lọc danh mục (cuộn ngang) */}
+          <div className="flex gap-2 overflow-x-auto no-scrollbar px-4 py-3 sticky top-[68px] z-10 bg-gray-100/80 backdrop-blur">
+            {categories.map((c) => (
+              <button
+                key={c}
+                onClick={() => setFilter(c)}
+                className={`whitespace-nowrap px-4 py-1.5 rounded-full text-[13px] font-semibold transition ${
+                  filter === c
+                    ? "bg-primary text-white shadow-soft"
+                    : "bg-white text-ink-soft"
+                }`}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+
+          {/* Danh sách thẻ tin */}
+          <div className="px-4 pb-4 space-y-4">
+            {visible.map((item) => (
+              <div
+                key={item.id}
+                onClick={() => openNews(item)}
+                className="bg-white rounded-3xl overflow-hidden shadow-soft active:scale-[0.98] transition cursor-pointer animate-fadeUp"
+              >
+                {/* "Ảnh bìa" infographic dựng bằng gradient + biểu tượng */}
+                <div
+                  className="relative h-32 flex items-center justify-center"
+                  style={{
+                    backgroundImage: `linear-gradient(140deg, ${item.theme.c1}, ${item.theme.c2})`,
+                  }}
+                >
+                  <div className="absolute inset-0 dot-grid opacity-40" />
+                  <span className="text-5xl drop-shadow-lg">{item.icon}</span>
+                  <span
+                    className="absolute top-3 left-3 text-[11px] font-bold px-2.5 py-1 rounded-full"
+                    style={{ background: item.theme.accent, color: item.theme.c2 }}
+                  >
+                    {item.category}
+                  </span>
+                </div>
+
+                <div className="p-4">
+                  <h3 className="font-bold text-ink leading-snug">
+                    {item.title}
+                  </h3>
+                  <p className="text-ink-soft text-[13px] mt-1 line-clamp-2">
+                    {item.summary}
+                  </p>
+                  <div className="flex items-center justify-between mt-3 text-[12px] text-gray-400">
+                    <span>🗓 {item.publishedAt}</span>
+                    <span className="text-primary font-semibold">
+                      Xem infographic ›
+                    </span>
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

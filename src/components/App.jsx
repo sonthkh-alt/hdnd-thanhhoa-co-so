@@ -1,10 +1,7 @@
 // ============================================================
-// COMPONENT GỐC: ĐIỀU HƯỚNG (ROUTER) GIỮA CÁC PHÂN HỆ
-// Dùng HashRouter của react-router-dom (đường dẫn dạng /#/...).
-// Lý do chọn HashRouter:
-//   - Chạy tốt trên GitHub Pages mà KHÔNG bị lỗi 404 khi tải lại trang.
-//   - Chạy tốt cả trong môi trường webview của Zalo.
-//   - Không phụ thuộc môi trường Zalo nên không bị "màn hình trắng".
+// COMPONENT GỐC: ĐIỀU HƯỚNG (ROUTER) + KHUNG GIAO DIỆN CHUNG
+// Dùng HashRouter (đường dẫn /#/...) để chạy tốt cả trên GitHub Pages
+// lẫn trong webview của Zalo, không bị lỗi 404 khi tải lại trang.
 // ============================================================
 import React from "react";
 import { HashRouter, Routes, Route } from "react-router-dom";
@@ -13,21 +10,25 @@ import HomePage from "./HomePage";
 import NewsComponent from "./NewsComponent";
 import QuizComponent from "./QuizComponent";
 import FeedbackComponent from "./FeedbackComponent";
+import { BottomNav } from "./common";
 
 export default function MyApp() {
   return (
     <HashRouter>
-      {/* Khai báo các đường dẫn (route) tương ứng từng phân hệ */}
-      <Routes>
-        {/* Trang chủ - 3 phân hệ */}
-        <Route path="/" element={<HomePage />} />
-        {/* Phân hệ 1: Điểm tin pháp luật */}
-        <Route path="/tin-tuc" element={<NewsComponent />} />
-        {/* Phân hệ 2: Thử tài đại biểu (Quiz) */}
-        <Route path="/trac-nghiem" element={<QuizComponent />} />
-        {/* Phân hệ 3: Gửi kiến nghị & vướng mắc */}
-        <Route path="/kien-nghi" element={<FeedbackComponent />} />
-      </Routes>
+      {/* Giới hạn bề rộng tối đa để đẹp cả trên máy tính (giả lập khung mobile) */}
+      <div className="max-w-md mx-auto min-h-screen bg-gray-100 relative shadow-xl">
+        {/* Chừa khoảng trống dưới cho thanh điều hướng cố định */}
+        <div className="pb-20">
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/tin-tuc" element={<NewsComponent />} />
+            <Route path="/trac-nghiem" element={<QuizComponent />} />
+            <Route path="/kien-nghi" element={<FeedbackComponent />} />
+          </Routes>
+        </div>
+        {/* Thanh điều hướng dưới luôn hiển thị ở mọi trang */}
+        <BottomNav />
+      </div>
     </HashRouter>
   );
 }
