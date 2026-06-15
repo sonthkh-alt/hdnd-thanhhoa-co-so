@@ -32,8 +32,11 @@ File [Code.gs](Code.gs) biến Google Sheet thành backend cho app: vừa làm *
 1. Lấy **Claude API key** tại https://console.anthropic.com → API Keys.
 2. Trong Apps Script: **Project Settings (bánh răng) → Script properties → Add property**:
    - Tên: `CLAUDE_API_KEY` — Giá trị: dán API key.
-3. Mở [Code.gs](Code.gs), điền các nguồn RSS chính thống bạn tin cậy vào `CAU_HINH.nguonRss`
-   (ví dụ RSS cổng thông tin tỉnh, báo điện tử mục pháp luật/địa phương).
+3. **Nguồn tin đã cắm sẵn**: Cổng thông tin Đoàn ĐBQH & HĐND tỉnh Thanh Hóa
+   (`dbndthanhhoa.gov.vn`). Trang này **không có RSS** nên script đọc thẳng HTML
+   (mục `CAU_HINH.nguonPortal`). Muốn thêm nguồn khác:
+   - Nếu trang có RSS → thêm link vào `CAU_HINH.nguonRss`.
+   - Nếu trang dạng portal HTML → thêm `{ listing, base }` vào `CAU_HINH.nguonPortal`.
 4. Chạy thử: chọn hàm `capNhatTinBangAI` → bấm **Run**. Lần đầu Google hỏi cấp quyền → đồng ý.
 5. Mở Sheet tab `TinTuc` xem các tin AI vừa thêm (cột `status` = "Chờ duyệt").
 6. **Cán bộ kiểm tra** nội dung từng tin; nếu chính xác thì sửa cột `status` thành **"Đã duyệt"** → tin lập tức hiển thị trên app.

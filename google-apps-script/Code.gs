@@ -32,11 +32,19 @@ const CAU_HINH = {
   // "claude-haiku-4-5" — rẻ hơn nhiều và vẫn tốt cho tóm tắt.
   model: "claude-opus-4-8",
 
-  // Danh sách nguồn RSS để lấy tin (thay bằng RSS chính thống bạn tin cậy).
-  // Gợi ý: RSS của cổng thông tin tỉnh, báo điện tử về pháp luật/địa phương.
+  // (a) Nguồn RSS (nếu trang có RSS). Để trống nếu không dùng.
   nguonRss: [
-    // "https://vi-du-rss-1/feed.xml",
-    // "https://vi-du-rss-2/rss",
+    // "https://vi-du-rss/feed.xml",
+  ],
+
+  // (b) Nguồn PORTAL HTML — dùng cho trang KHÔNG có RSS (đọc thẳng HTML).
+  // Đã cắm sẵn Cổng thông tin Đoàn ĐBQH & HĐND tỉnh Thanh Hóa.
+  // 'listing' = trang danh sách tin; 'base' = tên miền gốc để ghép link.
+  nguonPortal: [
+    {
+      listing: "https://dbndthanhhoa.gov.vn/portal/KenhTin/Hoi-dong-nhan-dan-tinh.aspx",
+      base: "https://dbndthanhhoa.gov.vn",
+    },
   ],
 
   soTinToiDaMoiLan: 5, // mỗi lần chạy chỉ xử lý tối đa 5 tin mới
@@ -102,33 +110,49 @@ function capNhatTinBangAI() {
   // Tập hợp các link đã có để không xử lý trùng.
   const daCo = docSheetThanhJson_(sheet).map(function (h) { return h.source; });
 
-  let demNew = 0;
+  // Gom tin từ cả 2 loại nguồn về một danh sách { link, title, description, pubDate }.
+  let tinTongHop = [];
+
+  // (a) Nguồn RSS
   CAU_HINH.nguonRss.forEach(function (urlRss) {
-    if (demNew >= CAU_HINH.soTinToiDaMoiLan) return;
-    const tinList = layTinTuRss_(urlRss);
+    tinTongHop = tinTongHop.concat(layTinTuRss_(urlRss));
+  });
 
-    tinList.forEach(function (tin) {
-      if (demNew >= CAU_HINH.soTinToiDaMoiLan) return;
-      if (daCo.indexOf(tin.link) >= 0) return; // đã có rồi
-
-      const kq = tomTatBangClaude_(tin);
-      if (!kq || kq.category === "BỎ QUA") return; // tin không liên quan
-
-      // Ghi tin mới ở trạng thái "Chờ duyệt" — cán bộ kiểm tra rồi mới công bố.
-      sheet.appendRow([
-        "TT" + new Date().getTime(),
-        kq.category,
-        kq.title,
-        kq.summary,
-        tin.link, // nguồn luôn là link bài gốc
-        tin.pubDate || new Date().toISOString().slice(0, 10),
-        kq.icon || "📰",
-        JSON.stringify(kq.theme || {}),
-        JSON.stringify(kq.infographic || {}),
-        "Chờ duyệt",
-      ]);
-      demNew++;
+  // (b) Nguồn portal HTML: lấy link bài rồi tải nội dung từng bài.
+  CAU_HINH.nguonPortal.forEach(function (ng) {
+    const links = layLinkTuPortal_(ng.listing, ng.base)
+      .filter(function (url) { return daCo.indexOf(url) < 0; }) // bỏ link đã có
+      .slice(0, CAU_HINH.soTinToiDaMoiLan + 3); // chỉ tải vài bài mới nhất
+    links.forEach(function (url) {
+      const bai = taiNoiDungBai_(url);
+      if (bai) tinTongHop.push(bai);
     });
+  });
+
+  // Xử lý tóm tắt từng tin mới (giới hạn số lượng mỗi lần chạy).
+  let demNew = 0;
+  tinTongHop.forEach(function (tin) {
+    if (demNew >= CAU_HINH.soTinToiDaMoiLan) return;
+    if (!tin.link || daCo.indexOf(tin.link) >= 0) return; // đã có rồi
+    daCo.push(tin.link); // chống trùng trong cùng lần chạy
+
+    const kq = tomTatBangClaude_(tin);
+    if (!kq || kq.category === "BỎ QUA") return; // tin không liên quan
+
+    // Ghi tin mới ở trạng thái "Chờ duyệt" — cán bộ kiểm tra rồi mới công bố.
+    sheet.appendRow([
+      "TT" + new Date().getTime(),
+      kq.category,
+      kq.title,
+      kq.summary,
+      tin.link, // nguồn luôn là link bài gốc
+      tin.pubDate || new Date().toISOString().slice(0, 10),
+      kq.icon || "📰",
+      JSON.stringify(kq.theme || {}),
+      JSON.stringify(kq.infographic || {}),
+      "Chờ duyệt",
+    ]);
+    demNew++;
   });
   Logger.log("Đã thêm " + demNew + " tin (trạng thái Chờ duyệt).");
 }
@@ -257,6 +281,69 @@ function layTinTuRss_(urlRss) {
 function layText_(item, ten) {
   const child = item.getChild(ten);
   return child ? child.getText() : "";
+}
+
+// Đọc trang danh sách portal (HTML) -> mảng link bài tuyệt đối (không trùng).
+// Dùng cho trang KHÔNG có RSS, ví dụ cổng HĐND tỉnh Thanh Hóa.
+function layLinkTuPortal_(listingUrl, base) {
+  try {
+    const html = UrlFetchApp.fetch(listingUrl, { muteHttpExceptions: true }).getContentText();
+    // Bắt mọi đường dẫn dạng /portal/pages/YYYY-MM-DD/...-ID.aspx
+    const re = /\/portal\/pages\/\d{4}-\d{2}-\d{2}\/[^"'<> ]+?\.aspx/g;
+    const set = {};
+    let m;
+    while ((m = re.exec(html)) !== null) set[base + m[0]] = true; // loại trùng
+    return Object.keys(set);
+  } catch (e) {
+    Logger.log("Không đọc được trang danh sách: " + listingUrl + " — " + e);
+    return [];
+  }
+}
+
+// Tải 1 bài viết portal -> { link, title, description, pubDate }.
+// Chỉ lấy phần thân bài (div.article-content) để tránh lẫn menu/giao diện.
+function taiNoiDungBai_(url) {
+  try {
+    const html = UrlFetchApp.fetch(url, { muteHttpExceptions: true }).getContentText();
+
+    // Tiêu đề: ưu tiên thẻ <h1>, nếu không có thì lấy từ slug trong URL.
+    let title = "";
+    const h1 = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
+    if (h1) title = boTag_(h1[1]);
+    if (!title) {
+      const slug = url.split("/").pop().replace(/-\d+\.aspx$/, "").replace(/-/g, " ");
+      title = slug;
+    }
+
+    // Thân bài: cắt từ vị trí 'article-content' và lấy một đoạn đủ dài, rồi bỏ tag.
+    let body = "";
+    const idx = html.indexOf("article-content");
+    if (idx >= 0) body = boTag_(html.substring(idx, idx + 9000));
+    body = body.slice(0, 3500); // đủ cho model tóm tắt, tránh tốn token
+
+    if (!body) return null;
+    return { link: url, title: title, description: body, pubDate: layNgayTuUrl_(url) };
+  } catch (e) {
+    Logger.log("Không tải được bài: " + url + " — " + e);
+    return null;
+  }
+}
+
+// Lấy ngày YYYY-MM-DD nằm trong đường dẫn /portal/pages/YYYY-MM-DD/...
+function layNgayTuUrl_(url) {
+  const m = url.match(/\/(\d{4}-\d{2}-\d{2})\//);
+  return m ? m[1] : new Date().toISOString().slice(0, 10);
+}
+
+// Bỏ thẻ HTML, script/style và gộp khoảng trắng -> văn bản thuần.
+function boTag_(s) {
+  return String(s)
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 // Đọc toàn bộ sheet (dòng 1 là tiêu đề cột) thành mảng object.
