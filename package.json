@@ -14,8 +14,8 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.22.0",
-    "zmp-ui": "^1.10.0",
-    "zmp-sdk": "^2.40.0"
+    "zmp-ui": "^1.11.14",
+    "zmp-sdk": "^2.51.4"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.2.0",
@@ -23,6 +23,6 @@
     "postcss": "^8.4.35",
     "tailwindcss": "^3.4.1",
     "vite": "^5.1.0",
-    "zmp-vite-plugin": "^2.0.0"
+    "zmp-vite-plugin": "^1.1.6"
   }
 }
