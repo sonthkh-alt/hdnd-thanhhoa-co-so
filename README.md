@@ -57,12 +57,15 @@ zmp start
 
 **Tab 1: `TinTuc`** (Phân hệ Điểm tin pháp luật)
 
-| id | category | title | summary | source | publishedAt | icon | theme | infographic |
-|----|----------|-------|---------|--------|-------------|------|-------|-------------|
-| TT001 | Chính quyền 2 cấp | Vận hành mô hình... | Tóm tắt ngắn | Nguồn... | 2026-06-10 | 🏛️ | `{"c1":"#C8102E","c2":"#7A0A1B","accent":"#F4B400"}` | `{"badge":"...","headline":"...","stats":[{"v":"2","l":"cấp"}],"points":["..."]}` |
+| id | category | title | summary | source | publishedAt | icon | theme | infographic | status |
+|----|----------|-------|---------|--------|-------------|------|-------|-------------|--------|
+| TT001 | Chính quyền 2 cấp | Mô hình... | Tóm tắt ngắn | Nguồn... | 2026-06-10 | 🏛️ | `{"c1":"#C8102E","c2":"#7A0A1B","accent":"#F4B400"}` | `{"badge":"...","headline":"...","stats":[{"v":"2","l":"cấp"}],"points":["..."]}` | Đã duyệt |
 
 > Không cần ảnh thiết kế sẵn nữa. Hai cột `theme` và `infographic` chứa **chuỗi JSON** — app tự dựng ra poster infographic đẹp từ dữ liệu này (xem [Infographic.jsx](src/components/Infographic.jsx)).
-> Phần JSON này có thể do **AI sinh tự động** từ tin lấy trên internet (xem khối hướng dẫn cuối file [api.js](src/services/api.js)), cán bộ chỉ việc duyệt trước khi công khai.
+> Cột `status`: chỉ tin **"Đã duyệt"** mới hiển thị công khai. Tin do AI tóm tắt sẽ ở trạng thái **"Chờ duyệt"** cho tới khi cán bộ kiểm chứng — đảm bảo không công bố thông tin sai.
+
+### 🤖 Backend miễn phí + AI tóm tắt tin (không bịa đặt)
+Thư mục [google-apps-script/](google-apps-script/) có sẵn script biến Google Sheet thành API (thay SheetDB), nhận kiến nghị, và **tự lấy tin RSS → nhờ Claude tóm tắt thành infographic** với ràng buộc chỉ dùng thông tin trong bài, nguồn = link gốc, và bắt buộc cán bộ duyệt trước khi công bố. Xem hướng dẫn từng bước tại [google-apps-script/README.md](google-apps-script/README.md).
 
 **Tab 2: `CauHoi`** (Phân hệ Trắc nghiệm)
 

@@ -130,6 +130,15 @@ export default function NewsComponent() {
             ))}
           </div>
 
+          {/* Cảnh báo minh bạch: đây là dữ liệu mẫu, không phải tin chính thống */}
+          <div className="mx-4 mb-3 flex gap-2 items-start bg-amber-50 border border-amber-200 rounded-2xl px-3.5 py-2.5">
+            <span className="text-base leading-none mt-0.5">ℹ️</span>
+            <p className="text-[12px] text-amber-800 leading-snug">
+              Đây là <b>dữ liệu mẫu</b> về kiến thức pháp luật. Tin thời sự sẽ
+              được cập nhật từ <b>nguồn chính thống</b> trước khi công bố.
+            </p>
+          </div>
+
           {/* Danh sách thẻ tin */}
           <div className="px-4 pb-4 space-y-4">
             {visible.map((item) => (

@@ -70,19 +70,17 @@ export default function InfographicPanel({ item, panel }) {
           </h3>
           <div className="space-y-3">
             {g.stats.map((s, i) => (
-              <div
-                key={i}
-                className="glass rounded-2xl px-4 py-3 flex items-center gap-4"
-              >
-                <span
-                  className="text-3xl font-extrabold min-w-[64px]"
+              <div key={i} className="glass rounded-2xl px-4 py-3">
+                {/* Giá trị nổi bật (có thể là con số hoặc cụm từ mô tả) */}
+                <div
+                  className="text-xl font-extrabold leading-tight"
                   style={{ color: theme.accent }}
                 >
                   {s.v}
-                </span>
-                <span className="text-sm text-white/90 font-medium">
+                </div>
+                <div className="text-[13px] text-white/90 font-medium mt-0.5">
                   {s.l}
-                </span>
+                </div>
               </div>
             ))}
           </div>
